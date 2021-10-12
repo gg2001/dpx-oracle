@@ -1,7 +1,7 @@
 {
-  "name": "compound-nft",
+  "name": "dpx-oracle",
   "version": "1.0.0",
-  "description": "Compound fork that allows Non-Fungible Uniswap V3 Positions as collateral",
+  "description": "Uniswap V2 TWAP Oracle for DPX",
   "keywords": [
     "blockchain",
     "ethereum",
@@ -10,8 +10,8 @@
     "solidity"
   ],
   "license": "GPL-3.0",
-  "homepage": "https://github.com/gg2001/cNFT",
-  "bugs": "https://github.com/gg2001/cNFT/issues",
+  "homepage": "https://github.com/gg2001/dpx-oracle",
+  "bugs": "https://github.com/gg2001/dpx-oracle/issues",
   "repository": {
     "type": "git",
     "url": "https://github.com/gg2001/compound-nft.git"
@@ -38,9 +38,7 @@
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain"
   },
   "dependencies": {
-    "openzeppelin-contracts-3.4.2": "npm:@openzeppelin/contracts@3.4.2",
-    "@uniswap/v3-core": "^1.0.0",
-    "@uniswap/v3-periphery": "^1.2.0"
+    "@uniswap/v2-core": "npm:@openzeppelin/contracts@3.4.2"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

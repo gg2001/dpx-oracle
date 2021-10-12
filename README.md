@@ -1,3 +1,3 @@
-# cNFT
+# dpx-oracle
 
-Compound fork that allows Non-Fungible Uniswap V3 Positions as collateral
+Uniswap V2 TWAP Oracle for DPX
