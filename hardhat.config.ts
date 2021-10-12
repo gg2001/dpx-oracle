@@ -80,31 +80,20 @@ const config: HardhatUserConfig = {
     tests: "./test",
   },
   solidity: {
-    compilers: [
-      {
-        version: "0.5.16",
-        settings: {
-          // Disable the optimizer when debugging
-          // https://hardhat.org/hardhat-network/#solidity-optimizer-support
-          optimizer: {
-            enabled: true,
-            runs: 800,
-          },
-        },
+    version: "0.6.6",
+    settings: {
+      metadata: {
+        // Not including the metadata hash
+        // https://github.com/paulrberg/solidity-template/issues/31
+        bytecodeHash: "none",
       },
-      {
-        version: "0.7.5",
-        settings: {
-          metadata: {
-            bytecodeHash: "none",
-          },
-          optimizer: {
-            enabled: true,
-            runs: 800,
-          },
-        },
+      // Disable the optimizer when debugging
+      // https://hardhat.org/hardhat-network/#solidity-optimizer-support
+      optimizer: {
+        enabled: true,
+        runs: 800,
       },
-    ],
+    },
   },
   mocha: {
     timeout: 600000,

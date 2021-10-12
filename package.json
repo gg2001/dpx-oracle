@@ -9,17 +9,17 @@
     "smart-contracts",
     "solidity"
   ],
-  "license": "GPL-3.0",
-  "homepage": "https://github.com/gg2001/dpx-oracle",
-  "bugs": "https://github.com/gg2001/dpx-oracle/issues",
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/dopex-io/dpx-oracle",
+  "bugs": "https://github.com/dopex-io/dpx-oracle/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gg2001/compound-nft.git"
+    "url": "https://github.com/dopex-io/dpx-oracle"
   },
   "author": {
-    "name": "Gautham Ganesh Elango",
-    "email": "gautham.gg@gmail.com",
-    "url": "https://github.com/gg2001"
+    "name": "Dopex",
+    "email": "gg@dopex.io",
+    "url": "https://dopex.io/"
   },
   "files": [
     "/contracts"
@@ -38,7 +38,10 @@
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain"
   },
   "dependencies": {
-    "@uniswap/v2-core": "npm:@openzeppelin/contracts@3.4.2"
+    "@openzeppelin/contracts": "npm:@openzeppelin/contracts@3.4.2",
+    "@uniswap/lib": "4.0.1-alpha",
+    "@uniswap/v2-core": "1.0.0",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
