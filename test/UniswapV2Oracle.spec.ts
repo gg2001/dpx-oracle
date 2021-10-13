@@ -7,7 +7,7 @@ const { solidity, createFixtureLoader } = waffle;
 chai.use(solidity);
 let loadFixture: ReturnType<typeof createFixtureLoader>;
 
-describe("unit/UniswapV3PositionOracle", () => {
+describe("unit/UniswapV2Oracle", () => {
   let accounts: Signer[];
   let owner: Wallet;
 
@@ -28,7 +28,7 @@ describe("unit/UniswapV3PositionOracle", () => {
   });
 
   describe("update", async () => {
-    it("should update", async () => {
+    it("should update price", async () => {
       const { uniswapV2Oracle, pair, token } = await loadFixture(uniswapV2OracleFixture);
       const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
       const blockTimestampLast: number = await uniswapV2Oracle.blockTimestampLast();
@@ -49,8 +49,29 @@ describe("unit/UniswapV3PositionOracle", () => {
           : reserves.reserve0.mul(one).div(reserves.reserve1);
       const oraclePrice: BigNumber = await uniswapV2Oracle.consult(one);
       expect(oraclePrice).to.be.eq(price);
+    });
+  });
 
-      console.log((await uniswapV2Oracle.viewPriceInUSD()).toString());
+  describe("getPriceInUSD", async () => {
+    it("should get USD price", async () => {
+      const { uniswapV2Oracle, token, priceFeed } = await loadFixture(uniswapV2OracleFixture);
+      const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
+      const blockTimestampLast: number = await uniswapV2Oracle.blockTimestampLast();
+      await network.provider.send("evm_setNextBlockTimestamp", [blockTimestampLast + period]);
+      await network.provider.send("evm_mine");
+      await uniswapV2Oracle.update();
+
+      const one: BigNumber = ethers.utils.parseUnits("1", await token.decimals());
+      const oraclePrice: BigNumber = await uniswapV2Oracle.consult(one);
+      const feedPrice: BigNumber = (await priceFeed.latestRoundData()).answer;
+      const price: BigNumber = oraclePrice.mul(feedPrice).div(one);
+
+      await expect(uniswapV2Oracle.getPriceInUSD())
+        .to.emit(uniswapV2Oracle, "PriceUpdated")
+        .withArgs(token.address, price);
+
+      const usdPrice = await uniswapV2Oracle.viewPriceInUSD();
+      expect(usdPrice).to.be.eq(price);
     });
   });
 });

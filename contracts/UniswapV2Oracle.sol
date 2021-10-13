@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.6.6;
 
-import { IUniswapV2Factory } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import { IOracle } from "./interfaces/IOracle.sol";
 import { IERC20 } from "./interfaces/IERC20.sol";
@@ -29,6 +28,8 @@ contract UniswapV2Oracle is IOracle {
     uint32 public blockTimestampLast;
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
+
+    uint256 private latestAnswer;
 
     constructor(
         address _pair,
@@ -73,17 +74,14 @@ contract UniswapV2Oracle is IOracle {
         uint8 tokenDecimals = IERC20(token).decimals();
         uint256 tokenUniswapPrice = consult(10**uint256(tokenDecimals));
         (, int256 feedPrice, , , ) = priceFeed.latestRoundData();
-        uint8 feedDecimals = priceFeed.decimals();
-        uint256 price = tokenUniswapPrice.mul(uint256(feedPrice)).div(10**uint256(feedDecimals));
+        uint256 price = tokenUniswapPrice.mul(uint256(feedPrice)).div(10**uint256(tokenDecimals));
+        latestAnswer = price;
+        emit PriceUpdated(token, price);
         return price;
     }
 
     function viewPriceInUSD() external view override returns (uint256) {
-        uint8 tokenDecimals = IERC20(token).decimals();
-        uint256 tokenUniswapPrice = consult(10**uint256(tokenDecimals));
-        (, int256 feedPrice, , , ) = priceFeed.latestRoundData();
-        uint256 price = tokenUniswapPrice.mul(uint256(feedPrice)).div(10**uint256(tokenDecimals));
-        return price;
+        return latestAnswer;
     }
 
     // note this will always return 0 before update has been called successfully for the first time.
