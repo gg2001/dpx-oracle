@@ -59,7 +59,7 @@ contract UniswapV2Oracle {
     }
 
     // note this will always return 0 before update has been called successfully for the first time.
-    function consult(uint256 amountIn) external view returns (uint256 amountOut) {
+    function consult(uint256 amountIn) public view returns (uint256 amountOut) {
         if (token == token0) {
             amountOut = price0Average.mul(amountIn).decode144();
         } else if (token == token1) {

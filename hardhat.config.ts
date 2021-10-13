@@ -62,7 +62,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: mainnetForkUrl,
-        blockNumber: 13369742,
+        blockNumber: 13406658,
       },
       chainId: chainIds.hardhat,
     },
