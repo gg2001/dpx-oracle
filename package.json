@@ -28,7 +28,7 @@
     "clean": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat clean",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
     "coverage": "cross-env CODE_COVERAGE=true hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"./test/**/*.ts\"",
-    "deploy": "hardhat deploy:Greeter",
+    "deploy": "hardhat run scripts/deploy.ts",
     "lint": "yarn lint:sol && yarn lint:ts && yarn prettier:check",
     "lint:sol": "solhint --config ./.solhint.json --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint --config ./.eslintrc.yaml --ignore-path ./.eslintignore --ext .js,.ts .",
@@ -45,9 +45,9 @@
     "@uniswap/v2-periphery": "^1.1.0-beta.0"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-etherscan": "^2.1.6",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@typechain/ethers-v5": "^7.1.0",
     "@typechain/hardhat": "^2.3.0",
     "@types/chai": "^4.2.22",

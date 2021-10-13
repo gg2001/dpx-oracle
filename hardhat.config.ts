@@ -1,4 +1,6 @@
 import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-etherscan";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
@@ -23,17 +25,22 @@ const chainIds = {
 // Ensure that we have all the environment variables we need.
 const mnemonic: string | undefined = process.env.MNEMONIC;
 if (!mnemonic) {
-  console.warn("Please set your MNEMONIC in a .env file");
+  console.warn("Please set MNEMONIC in a .env file");
 }
 
 const infuraApiKey: string | undefined = process.env.INFURA_API_KEY;
 if (!infuraApiKey) {
-  console.warn("Please set your INFURA_API_KEY in a .env file");
+  console.warn("Please set INFURA_API_KEY in a .env file");
+}
+
+const etherscanKey: string | undefined = process.env.ETHERSCAN;
+if (!etherscanKey) {
+  console.warn("Please set ETHERSCAN in a .env file");
 }
 
 const mainnetForkUrl: string | undefined = process.env.MAINNET_FORK_URL;
 if (!mainnetForkUrl) {
-  throw new Error("Please set your MAINNET_FORK_URL in a .env file");
+  throw new Error("Please set MAINNET_FORK_URL in a .env file");
 }
 
 function getChainConfig(network: keyof typeof chainIds, apiKey: string): NetworkUserConfig {
@@ -104,6 +111,9 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
     target: "ethers-v5",
+  },
+  etherscan: {
+    apiKey: etherscanKey,
   },
 };
 
