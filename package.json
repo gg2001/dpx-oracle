@@ -1,7 +1,7 @@
 {
   "name": "dpx-oracle",
   "version": "1.0.0",
-  "description": "Uniswap V2 TWAP Oracle for DPX",
+  "description": "Uniswap V2 TWAP Oracle for DPX/USD",
   "keywords": [
     "blockchain",
     "ethereum",
