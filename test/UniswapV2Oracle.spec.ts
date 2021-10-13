@@ -1,7 +1,6 @@
 import { ethers, network, waffle } from "hardhat";
 import { Signer, Wallet, BigNumber } from "ethers";
 import chai, { expect } from "chai";
-import { encodePrice } from "./shared/utilities";
 import { uniswapV2OracleFixture } from "./shared/fixtures";
 
 const { solidity, createFixtureLoader } = waffle;
@@ -50,6 +49,8 @@ describe("unit/UniswapV3PositionOracle", () => {
           : reserves.reserve0.mul(one).div(reserves.reserve1);
       const oraclePrice: BigNumber = await uniswapV2Oracle.consult(one);
       expect(oraclePrice).to.be.eq(price);
+
+      console.log((await uniswapV2Oracle.viewPriceInUSD()).toString());
     });
   });
 });

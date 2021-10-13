@@ -3,17 +3,23 @@ pragma solidity ^0.6.6;
 
 import { IUniswapV2Factory } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import { IOracle } from "./interfaces/IOracle.sol";
+import { IERC20 } from "./interfaces/IERC20.sol";
+import { AggregatorV3Interface } from "./interfaces/AggregatorV3Interface.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { FixedPoint } from "@uniswap/lib/contracts/libraries/FixedPoint.sol";
 import { UniswapV2OracleLibrary } from "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
-contract UniswapV2Oracle {
+contract UniswapV2Oracle is IOracle {
     using FixedPoint for *;
+    using SafeMath for uint256;
 
     uint256 public constant PERIOD = 15 minutes;
 
     IUniswapV2Pair public immutable pair;
+    AggregatorV3Interface public immutable priceFeed;
     address public immutable token;
     address public immutable token0;
     address public immutable token1;
@@ -24,7 +30,11 @@ contract UniswapV2Oracle {
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
-    constructor(address _pair, address _token) public {
+    constructor(
+        address _pair,
+        address _token,
+        address _priceFeed
+    ) public {
         pair = IUniswapV2Pair(_pair);
         address _token0 = IUniswapV2Pair(_pair).token0();
         address _token1 = IUniswapV2Pair(_pair).token1();
@@ -38,6 +48,7 @@ contract UniswapV2Oracle {
         uint112 reserve1;
         (reserve0, reserve1, blockTimestampLast) = IUniswapV2Pair(_pair).getReserves();
         require(reserve0 != 0 && reserve1 != 0, "UniswapV2Oracle: NO_RESERVES"); // ensure that there's liquidity in the pair
+        priceFeed = AggregatorV3Interface(_priceFeed);
     }
 
     function update() external {
@@ -56,6 +67,23 @@ contract UniswapV2Oracle {
         price0CumulativeLast = price0Cumulative;
         price1CumulativeLast = price1Cumulative;
         blockTimestampLast = blockTimestamp;
+    }
+
+    function getPriceInUSD() external override returns (uint256) {
+        uint8 tokenDecimals = IERC20(token).decimals();
+        uint256 tokenUniswapPrice = consult(10**uint256(tokenDecimals));
+        (, int256 feedPrice, , , ) = priceFeed.latestRoundData();
+        uint8 feedDecimals = priceFeed.decimals();
+        uint256 price = tokenUniswapPrice.mul(uint256(feedPrice)).div(10**uint256(feedDecimals));
+        return price;
+    }
+
+    function viewPriceInUSD() external view override returns (uint256) {
+        uint8 tokenDecimals = IERC20(token).decimals();
+        uint256 tokenUniswapPrice = consult(10**uint256(tokenDecimals));
+        (, int256 feedPrice, , , ) = priceFeed.latestRoundData();
+        uint256 price = tokenUniswapPrice.mul(uint256(feedPrice)).div(10**uint256(tokenDecimals));
+        return price;
     }
 
     // note this will always return 0 before update has been called successfully for the first time.

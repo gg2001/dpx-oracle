@@ -38,6 +38,7 @@
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain"
   },
   "dependencies": {
+    "@chainlink/contracts": "^0.2.2",
     "@openzeppelin/contracts": "npm:@openzeppelin/contracts@3.4.2",
     "@uniswap/lib": "4.0.1-alpha",
     "@uniswap/v2-core": "1.0.0",

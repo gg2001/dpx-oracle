@@ -1,7 +1,14 @@
 import { ethers } from "hardhat";
 import { Wallet } from "ethers";
 import { addresses } from "../../constants";
-import { UniswapV2Oracle, IERC20, IUniswapV2Factory, IUniswapV2Pair, UniswapV2Oracle__factory } from "../../typechain";
+import {
+  UniswapV2Oracle,
+  IERC20,
+  IUniswapV2Factory,
+  IUniswapV2Pair,
+  AggregatorV3Interface,
+  UniswapV2Oracle__factory,
+} from "../../typechain";
 
 interface UniswapV2OracleFixture {
   uniswapV2Oracle: UniswapV2Oracle;
@@ -9,6 +16,7 @@ interface UniswapV2OracleFixture {
   WETH: IERC20;
   factoryV2: IUniswapV2Factory;
   pair: IUniswapV2Pair;
+  priceFeed: AggregatorV3Interface;
 }
 
 export async function uniswapV2OracleFixture(wallet: Wallet[]): Promise<UniswapV2OracleFixture> {
@@ -35,6 +43,10 @@ export async function uniswapV2OracleFixture(wallet: Wallet[]): Promise<UniswapV
     "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol:IUniswapV2Pair",
     pairAddress,
   )) as IUniswapV2Pair;
+  const priceFeed: AggregatorV3Interface = (await ethers.getContractAt(
+    "contracts/interfaces/AggregatorV3Interface.sol:AggregatorV3Interface",
+    addresses[chainId].priceFeed,
+  )) as AggregatorV3Interface;
 
   const uniswapV2OracleFactory: UniswapV2Oracle__factory = (await ethers.getContractFactory(
     "contracts/UniswapV2Oracle.sol:UniswapV2Oracle",
@@ -42,7 +54,7 @@ export async function uniswapV2OracleFixture(wallet: Wallet[]): Promise<UniswapV
   )) as UniswapV2Oracle__factory;
   const uniswapV2Oracle: UniswapV2Oracle = await uniswapV2OracleFactory
     .connect(owner)
-    .deploy(pair.address, token.address);
+    .deploy(pair.address, token.address, priceFeed.address);
 
-  return { factoryV2, token, WETH, pair, uniswapV2Oracle };
+  return { factoryV2, token, WETH, pair, priceFeed, uniswapV2Oracle };
 }
