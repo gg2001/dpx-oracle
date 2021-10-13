@@ -17,6 +17,7 @@ const chainIds = {
   mainnet: 1,
   rinkeby: 4,
   ropsten: 3,
+  arbitrum: 42161,
 };
 
 // Ensure that we have all the environment variables we need.
@@ -67,6 +68,8 @@ const config: HardhatUserConfig = {
       chainId: chainIds.hardhat,
     },
     ...(infuraApiKey && {
+      mainnet: getChainConfig("mainnet", infuraApiKey),
+      arbitrum: getChainConfig("arbitrum", infuraApiKey),
       goerli: getChainConfig("goerli", infuraApiKey),
       kovan: getChainConfig("kovan", infuraApiKey),
       rinkeby: getChainConfig("rinkeby", infuraApiKey),
