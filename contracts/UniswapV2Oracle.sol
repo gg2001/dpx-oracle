@@ -53,24 +53,11 @@ contract UniswapV2Oracle is IOracle {
     }
 
     function update() external {
-        (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
-            .currentCumulativePrices(address(pair));
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
-
-        // ensure that at least one full period has passed since the last update
-        require(timeElapsed >= PERIOD, "UniswapV2Oracle: PERIOD_NOT_ELAPSED");
-
-        // overflow is desired, casting never truncates
-        // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
-        price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
-        price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
-
-        price0CumulativeLast = price0Cumulative;
-        price1CumulativeLast = price1Cumulative;
-        blockTimestampLast = blockTimestamp;
+        require(_update(), "UniswapV2Oracle: PERIOD_NOT_ELAPSED");
     }
 
     function getPriceInUSD() external override returns (uint256) {
+        _update();
         uint8 tokenDecimals = IERC20(token).decimals();
         uint256 tokenUniswapPrice = consult(10**uint256(tokenDecimals));
         (, int256 feedPrice, , , ) = priceFeed.latestRoundData();
@@ -90,6 +77,27 @@ contract UniswapV2Oracle is IOracle {
             amountOut = price0Average.mul(amountIn).decode144();
         } else if (token == token1) {
             amountOut = price1Average.mul(amountIn).decode144();
+        }
+    }
+
+    function _update() internal returns (bool) {
+        (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
+            .currentCumulativePrices(address(pair));
+        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+
+        // ensure that at least one full period has passed since the last update
+        if (timeElapsed >= PERIOD) {
+            // overflow is desired, casting never truncates
+            // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+            price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
+            price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
+
+            price0CumulativeLast = price0Cumulative;
+            price1CumulativeLast = price1Cumulative;
+            blockTimestampLast = blockTimestamp;
+            return true;
+        } else {
+            return false;
         }
     }
 }
