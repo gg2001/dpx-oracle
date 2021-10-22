@@ -78,11 +78,13 @@ describe("unit/UniswapV2Oracle", () => {
       const prices = await uniswapV2Oracle.prices(one, 1);
       expect(prices[0]).to.be.eq(price);
 
-      const hourly = await uniswapV2Oracle.hourly(one, 1);
-      expect(hourly[0]).to.be.eq(price);
-
       const daily = await uniswapV2Oracle.daily(one, 1);
       expect(daily[0]).to.be.eq(price);
+
+      const hourly = await uniswapV2Oracle.hourly(one, 12);
+      expect(hourly[0]).to.be.eq(price);
+
+      expect(await uniswapV2Oracle.stddev(hourly)).to.be.eq(BigNumber.from("0"));
     });
   });
 
