@@ -53,6 +53,7 @@ contract UniswapV2Oracle is IOracle {
         (uint112 reserve0, uint112 reserve1, ) = IUniswapV2Pair(_pair).getReserves();
         require(reserve0 != 0 && reserve1 != 0, "UniswapV2Oracle: NO_RESERVES"); // ensure that there's liquidity in the pair
         priceFeed = AggregatorV3Interface(_priceFeed);
+
         (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
             .currentCumulativePrices(_pair);
         (, int256 feedPrice, , , ) = AggregatorV3Interface(_priceFeed).latestRoundData();

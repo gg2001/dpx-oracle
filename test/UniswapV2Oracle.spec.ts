@@ -48,6 +48,42 @@ describe("unit/UniswapV2Oracle", () => {
       const oraclePrice: BigNumber = await uniswapV2Oracle.consult(one);
       expect(oraclePrice).to.be.eq(price);
     });
+
+    it("should update multiple times", async () => {
+      const { uniswapV2Oracle, pair, token, priceFeed } = await loadFixture(uniswapV2OracleFixture);
+      const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
+      const { timestamp: blockTimestampLast } = await uniswapV2Oracle.lastObservation();
+
+      await network.provider.send("evm_setNextBlockTimestamp", [blockTimestampLast + Math.round(period / 2)]);
+      await network.provider.send("evm_mine");
+      await expect(uniswapV2Oracle.update()).to.be.revertedWith("UniswapV2Oracle: PERIOD_NOT_ELAPSED");
+
+      await network.provider.send("evm_setNextBlockTimestamp", [blockTimestampLast + period]);
+      await network.provider.send("evm_mine");
+
+      const day: number = 86400;
+      const one: BigNumber = ethers.utils.parseUnits("1", await token.decimals());
+      const price: BigNumber = await getPrice(token, pair, priceFeed);
+
+      for (let i = 0; i < day / period; i++) {
+        await uniswapV2Oracle.update();
+
+        const oraclePrice: BigNumber = await uniswapV2Oracle.consult(one);
+        expect(oraclePrice).to.be.eq(price);
+
+        await network.provider.send("evm_increaseTime", [period]);
+        await network.provider.send("evm_mine");
+      }
+
+      const prices = await uniswapV2Oracle.prices(one, 1);
+      expect(prices[0]).to.be.eq(price);
+
+      const hourly = await uniswapV2Oracle.hourly(one, 1);
+      expect(hourly[0]).to.be.eq(price);
+
+      const daily = await uniswapV2Oracle.daily(one, 1);
+      expect(daily[0]).to.be.eq(price);
+    });
   });
 
   describe("getPriceInUSD", async () => {
