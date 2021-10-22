@@ -2,6 +2,7 @@ import { ethers, network, waffle } from "hardhat";
 import { Signer, Wallet, BigNumber } from "ethers";
 import chai, { expect } from "chai";
 import { uniswapV2OracleFixture } from "./shared/fixtures";
+import { getPrice } from "./shared/helpers";
 
 const { solidity, createFixtureLoader } = waffle;
 chai.use(solidity);
@@ -29,9 +30,9 @@ describe("unit/UniswapV2Oracle", () => {
 
   describe("update", async () => {
     it("should update price", async () => {
-      const { uniswapV2Oracle, pair, token } = await loadFixture(uniswapV2OracleFixture);
+      const { uniswapV2Oracle, pair, token, priceFeed } = await loadFixture(uniswapV2OracleFixture);
       const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
-      const blockTimestampLast: number = await uniswapV2Oracle.blockTimestampLast();
+      const { timestamp: blockTimestampLast } = await uniswapV2Oracle.lastObservation();
 
       await network.provider.send("evm_setNextBlockTimestamp", [blockTimestampLast + Math.round(period / 2)]);
       await network.provider.send("evm_mine");
@@ -41,12 +42,9 @@ describe("unit/UniswapV2Oracle", () => {
       await network.provider.send("evm_mine");
       await uniswapV2Oracle.update();
 
+      const price: BigNumber = await getPrice(token, pair, priceFeed);
+
       const one: BigNumber = ethers.utils.parseUnits("1", await token.decimals());
-      const reserves = await pair.getReserves();
-      const price: BigNumber =
-        token.address == (await pair.token0())
-          ? reserves.reserve1.mul(one).div(reserves.reserve0)
-          : reserves.reserve0.mul(one).div(reserves.reserve1);
       const oraclePrice: BigNumber = await uniswapV2Oracle.consult(one);
       expect(oraclePrice).to.be.eq(price);
     });
@@ -54,21 +52,20 @@ describe("unit/UniswapV2Oracle", () => {
 
   describe("getPriceInUSD", async () => {
     it("should get USD price", async () => {
-      const { uniswapV2Oracle, token, priceFeed } = await loadFixture(uniswapV2OracleFixture);
+      const { uniswapV2Oracle, token, priceFeed, pair } = await loadFixture(uniswapV2OracleFixture);
       const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
-      const blockTimestampLast: number = await uniswapV2Oracle.blockTimestampLast();
-      await network.provider.send("evm_setNextBlockTimestamp", [blockTimestampLast + period]);
+      await network.provider.send("evm_increaseTime", [period]);
       await network.provider.send("evm_mine");
       await uniswapV2Oracle.update();
 
-      const one: BigNumber = ethers.utils.parseUnits("1", await token.decimals());
-      const oraclePrice: BigNumber = await uniswapV2Oracle.consult(one);
-      const feedPrice: BigNumber = (await priceFeed.latestRoundData()).answer;
-      const price: BigNumber = oraclePrice.mul(feedPrice).div(one);
+      const price: BigNumber = await getPrice(token, pair, priceFeed);
 
       await expect(uniswapV2Oracle.getPriceInUSD())
         .to.emit(uniswapV2Oracle, "PriceUpdated")
         .withArgs(token.address, price);
+
+      const getUsdPrice = await uniswapV2Oracle.callStatic.getPriceInUSD();
+      expect(getUsdPrice).to.be.eq(price);
 
       const usdPrice = await uniswapV2Oracle.viewPriceInUSD();
       expect(usdPrice).to.be.eq(price);
