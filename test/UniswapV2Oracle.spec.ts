@@ -31,7 +31,7 @@ describe("unit/UniswapV2Oracle", () => {
   describe("update", async () => {
     it("should update price", async () => {
       const { uniswapV2Oracle, pair, token, priceFeed } = await loadFixture(uniswapV2OracleFixture);
-      const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
+      const period: number = (await uniswapV2Oracle.period()).toNumber();
       const { timestamp: blockTimestampLast } = await uniswapV2Oracle.lastObservation();
 
       await network.provider.send("evm_setNextBlockTimestamp", [blockTimestampLast + Math.round(period / 2)]);
@@ -51,7 +51,7 @@ describe("unit/UniswapV2Oracle", () => {
 
     it("should update multiple times", async () => {
       const { uniswapV2Oracle, pair, token, priceFeed } = await loadFixture(uniswapV2OracleFixture);
-      const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
+      const period: number = (await uniswapV2Oracle.period()).toNumber();
       const { timestamp: blockTimestampLast } = await uniswapV2Oracle.lastObservation();
 
       await network.provider.send("evm_setNextBlockTimestamp", [blockTimestampLast + Math.round(period / 2)]);
@@ -91,7 +91,7 @@ describe("unit/UniswapV2Oracle", () => {
   describe("getPriceInUSD", async () => {
     it("should get USD price", async () => {
       const { uniswapV2Oracle, token, priceFeed, pair } = await loadFixture(uniswapV2OracleFixture);
-      const period: number = (await uniswapV2Oracle.PERIOD()).toNumber();
+      const period: number = (await uniswapV2Oracle.period()).toNumber();
       await network.provider.send("evm_increaseTime", [period]);
       await network.provider.send("evm_mine");
       await uniswapV2Oracle.update();
@@ -107,6 +107,16 @@ describe("unit/UniswapV2Oracle", () => {
 
       const usdPrice = await uniswapV2Oracle.viewPriceInUSD();
       expect(usdPrice).to.be.eq(price);
+    });
+  });
+
+  describe("updatePeriod", async () => {
+    it("should update period", async () => {
+      const { uniswapV2Oracle } = await loadFixture(uniswapV2OracleFixture);
+      const newPeriod = 900;
+      await uniswapV2Oracle.setPeriod(newPeriod);
+
+      expect((await uniswapV2Oracle.period()).toNumber()).to.be.eq(newPeriod);
     });
   });
 });

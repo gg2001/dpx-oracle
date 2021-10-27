@@ -2,8 +2,9 @@
 pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
-import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IOracle } from "./interfaces/IOracle.sol";
+import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import { IERC20 } from "./interfaces/IERC20.sol";
 import { AggregatorV3Interface } from "./interfaces/AggregatorV3Interface.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -13,7 +14,7 @@ import { UniswapV2OracleLibrary } from "@uniswap/v2-periphery/contracts/librarie
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
-contract UniswapV2Oracle is IOracle {
+contract UniswapV2Oracle is Ownable, IOracle {
     using FixedPoint for *;
     using SafeMath for uint256;
 
@@ -24,7 +25,7 @@ contract UniswapV2Oracle is IOracle {
         uint256 feedPrice;
     }
 
-    uint256 public constant PERIOD = 2 hours;
+    uint256 public period;
 
     IUniswapV2Pair public immutable pair;
     AggregatorV3Interface public immutable priceFeed;
@@ -58,6 +59,14 @@ contract UniswapV2Oracle is IOracle {
             .currentCumulativePrices(_pair);
         (, int256 feedPrice, , , ) = AggregatorV3Interface(_priceFeed).latestRoundData();
         observations.push(Observation(blockTimestamp, price0Cumulative, price1Cumulative, uint256(feedPrice)));
+
+        period = 2 hours;
+        emit UpdatePeriod(period);
+    }
+
+    function setPeriod(uint256 _period) external onlyOwner {
+        period = _period;
+        emit UpdatePeriod(_period);
     }
 
     function update() external {
@@ -121,15 +130,15 @@ contract UniswapV2Oracle is IOracle {
     }
 
     function hourly(uint256 amountIn, uint256 points) external view returns (uint256[] memory) {
-        return sample(amountIn, points, 1 hours / PERIOD);
+        return sample(amountIn, points, 1 hours / period);
     }
 
     function daily(uint256 amountIn, uint256 points) external view returns (uint256[] memory) {
-        return sample(amountIn, points, 1 days / PERIOD);
+        return sample(amountIn, points, 1 days / period);
     }
 
     function weekly(uint256 amountIn, uint256 points) external view returns (uint256[] memory) {
-        return sample(amountIn, points, 1 weeks / PERIOD);
+        return sample(amountIn, points, 1 weeks / period);
     }
 
     function sample(
@@ -270,7 +279,7 @@ contract UniswapV2Oracle is IOracle {
         uint32 timeElapsed = blockTimestamp - _point.timestamp; // overflow is desired
 
         // ensure that at least one full period has passed since the last update
-        if (timeElapsed >= PERIOD) {
+        if (timeElapsed >= period) {
             (, int256 feedPrice, , , ) = priceFeed.latestRoundData();
             observations.push(Observation(blockTimestamp, price0Cumulative, price1Cumulative, uint256(feedPrice)));
             return true;
@@ -293,4 +302,6 @@ contract UniswapV2Oracle is IOracle {
         amountOut = priceAverage.mul(amountIn).decode144();
         amountOut = amountOut.mul(feedPrice).div(10**uint256(decimals));
     }
+
+    event UpdatePeriod(uint256 period);
 }
