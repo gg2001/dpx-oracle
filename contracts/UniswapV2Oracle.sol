@@ -24,7 +24,7 @@ contract UniswapV2Oracle is IOracle {
         uint256 feedPrice;
     }
 
-    uint256 public constant PERIOD = 30 minutes;
+    uint256 public constant PERIOD = 2 hours;
 
     IUniswapV2Pair public immutable pair;
     AggregatorV3Interface public immutable priceFeed;
